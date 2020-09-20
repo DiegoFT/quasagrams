@@ -48,7 +48,7 @@ module.exports = function (/* ctx */) {
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
       env: {
-        API: API_PRODUCTION // API_LOCAL | API_PRODUCTION
+        API: API_LOCAL // API_LOCAL | API_PRODUCTION
       },
       vueRouterMode: 'hash', // available values: 'hash', 'history'
 

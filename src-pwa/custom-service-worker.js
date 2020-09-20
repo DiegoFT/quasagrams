@@ -110,7 +110,8 @@ registerRoute(
  */
 if (backgroundSyncSupported) {
   self.addEventListener('fetch', (event) => {
-    if (event.request.url.endsWith('/createPost')) {
+    // para evitar doble llamada solo hacemos el fetch cuando está offline
+    if (event.request.url.endsWith('/createPost') && !self.navigator.onLine) {
       // Clone the request to ensure it's safe to read when
       // adding to the Queue.
       const promiseChain = fetch(event.request.clone()).catch((err) => {
@@ -123,3 +124,64 @@ if (backgroundSyncSupported) {
     }
   })
 }
+
+
+/*
+ * events - push
+ */
+self.addEventListener('push', event => {
+  // console.log('Push message received: ', event)
+  if (event.data) {
+    let data = JSON.parse(event.data.text())
+    event.waitUntil(
+      self.registration.showNotification(
+        data.title, {
+          body: data.body,
+          icon: 'icons/icon-192x192.png',
+          badge: 'icons/icon-192x192.png', //no supported on Mac, in Android yes
+          data: {
+            openUrl: data.openUrl,
+          }
+        }
+      )
+    )
+  }
+})
+
+
+/*
+ * events - notifications
+ */
+self.addEventListener('notificationclick', event => {
+  let notification = event.notification
+  let action = event.action
+
+  if (action == 'hello') {
+    console.log('Hello button was clicked')
+  } else if (action == 'goodbye') {
+    console.log('Goodbye button was clicked')
+  } else {
+    // console.log('Main button was clicked')
+    event.waitUntil(
+      clients.matchAll()
+      .then(clis => {
+        // console.log('clis: ', clis)
+        let clientsUsingApp = clis.find(cli => {
+          return cli.visibilityState === 'visible'
+        })
+        if (clientsUsingApp) {
+          clientsUsingApp.navigate(notification.data.openUrl)
+          clientsUsingApp.focus()
+        } else {
+          clients.openWindow(notification.data.openUrl)
+        }
+      })
+    )
+  }
+  // para probar clicks en notificacion comentar
+  notification.close()
+})
+
+self.addEventListener('notificationclose', event => {
+  console.log('Notification was closed ', event)
+})

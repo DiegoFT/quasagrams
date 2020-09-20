@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "deploy": "heroku builds:create -a quasagrams-backend"
+    "deploy": "heroku builds:create -a quasagrams-backend",
+    "web-push": "web-push"
   },
   "license": "MIT",
   "dependencies": {
@@ -12,6 +13,7 @@
     "express": "^4.17.1",
     "firebase-admin": "^9.1.1",
     "nodemon": "^2.0.4",
-    "uuid-v4": "^0.1.0"
+    "uuid-v4": "^0.1.0",
+    "web-push": "^3.4.4"
   }
 }

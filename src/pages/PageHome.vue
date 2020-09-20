@@ -151,6 +151,7 @@ import {
 import {
   openDB
 } from 'idb'
+let qs = require('qs')
 
 export default {
   name: 'PageHome',
@@ -243,26 +244,94 @@ export default {
       // console.log('enableNotification')
       if (this.pushNotificationsSupported) {
         Notification.requestPermission(result => {
-          console.log('result', result)
+          // console.log('result', result)
           this.neverShowNotificationBanner()
           if (result == 'granted') {
-            this.displayGrantedNotification()
+            // this.displayGrantedNotification()
+            this.checkForExistingPushSubscription()
           }
         })
       }
     },
+    checkForExistingPushSubscription() {
+      if (this.serviceWorkerSupported && this.pushNotificationsSupported) {
+        let reg
+        navigator.serviceWorker.ready
+          .then(swreg => {
+            reg = swreg
+            return swreg.pushManager.getSubscription()
+          })
+          .then(sub => {
+            if (!sub) {
+              // console.log('create a new push subscription')
+              this.createPushSubscription(reg)
+            }
+          })
+      }
+    },
+    createPushSubscription(reg) {
+      let vapidPublicKey =
+        'BLd5ZaseVlPRuVBeDgdwSlmVsTW6xYm7QKOxMi5nU0Lh11FgWUnXQYROvVCkEj2gxG9PilMTehJ5L13c6dai_ss'
+      let vapidPublicKeyConverted = this.urlBase64ToUint8Array(vapidPublicKey)
+      reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidPublicKeyConverted,
+        })
+        .then(newSub => {
+          // console.log('newSub: ', newSub)
+          let newSubData = newSub.toJSON(),
+            newSubDataQS = qs.stringify(newSubData)
+          // console.log('newSubData: ', newSubData)
+          let url = `${process.env.API}/createSubscription?${newSubDataQS}`
+          return this.$axios.post(url)
+        })
+        .then(response => {
+          // console.log('response: ', response)
+          this.displayGrantedNotification()
+        })
+        .catch(err => {
+          console.log('err: ', err)
+        })
+    },
     displayGrantedNotification() {
-      new Notification(this.$t('notification'), {
-        body: 'Gracias por suscribirte!',
-        icon: 'icons\icon-192x192.png',
-        image: 'icons\icon-192x192.png', // no supported on Mac, in Android yes
-        badge: 'icons\icon-192x192.png', //no supported on Mac, in Android yes
-        dir: 'ltr', // text direction - ltr | rtl | auto 
-        lang: 'es-ES',
-        vibrate: [100, 50, 200], // values in ms -  vibrate during 100ms pause 50ms and vibrate again 200ms
-        tag: 'confirm-notification',
-        renotify: true // true | false
-      })
+      // new Notification(this.$t('notification'), {
+      //   body: 'Gracias por suscribirte!',
+      //   icon: 'icons\icon-192x192.png',
+      //   image: 'icons\icon-192x192.png', // no supported on Mac, in Android yes
+      //   badge: 'icons\icon-192x192.png', //no supported on Mac, in Android yes
+      //   dir: 'ltr', // text direction - ltr | rtl | auto 
+      //   lang: 'es-ES',
+      //   vibrate: [100, 50, 200], // values in ms -  vibrate during 100ms pause 50ms and vibrate again 200ms
+      //   tag: 'confirm-notification',
+      //   renotify: true // true | false
+      // })
+      if (this.serviceWorkerSupported && this.pushNotificationsSupported) {
+        navigator.serviceWorker.ready
+          .then(swreg => {
+            swreg.showNotification(this.$t('notification'), {
+              body: 'Gracias por suscribirte!',
+              icon: 'icons/icon-192x192.png',
+              image: 'icons/icon-192x192.png', // no supported on Mac, in Android yes
+              badge: 'icons/icon-192x192.png', //no supported on Mac, in Android yes
+              dir: 'ltr', // text direction - ltr | rtl | auto 
+              lang: 'es-ES',
+              vibrate: [100, 50, 200], // values in ms -  vibrate during 100ms pause 50ms and vibrate again 200ms
+              tag: 'confirm-notification',
+              renotify: true, // true | false
+              actions: [{
+                  action: 'hello',
+                  title: 'Hello',
+                  icon: 'icons/icon-128x128.png'
+                },
+                {
+                  action: 'goodbye',
+                  title: 'Goodbye',
+                  icon: 'icons/icon-128x128.png'
+                },
+              ],
+            })
+          })
+      }
     },
     neverShowNotificationBanner() {
       this.showNotificationBanner = false
@@ -274,6 +343,20 @@ export default {
       if (!neverShowNotificationBanner) {
         this.showNotificationBanner = true
       }
+    },
+    urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
     },
   },
   filters: {

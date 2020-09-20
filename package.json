@@ -12,15 +12,16 @@
     "pwa": "quasar dev -m pwa",
     "server": "cd ./backend && yarn start",
     "heroku": "cd ./backend && yarn deploy",
-    "icons": "icongenie generate -i app-icon.png --skip-trim --theme-color 212121"
+    "icons": "icongenie generate -i app-icon.png --skip-trim --theme-color 212121",
+    "web-push": "cd ./backend && web-push"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
     "axios": "^0.18.1",
     "core-js": "^3.6.5",
     "firebase-admin": "^9.1.1",
-    "md-gum-polyfill": "^1.0.0",
     "idb": "^5.0.6",
+    "md-gum-polyfill": "^1.0.0",
     "quasar": "^1.0.0",
     "vue-i18n": "^8.0.0"
   },
