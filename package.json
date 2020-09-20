@@ -13,7 +13,8 @@
     "server": "cd ./backend && yarn start",
     "heroku": "cd ./backend && yarn deploy",
     "icons": "icongenie generate -i app-icon.png --skip-trim --theme-color 212121",
-    "web-push": "cd ./backend && web-push"
+    "web-push": "cd ./backend && web-push",
+    "full-deploy": "quasar build -m pwa && yarn heroku && firebase deploy"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
